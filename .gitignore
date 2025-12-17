@@ -1,0 +1,9 @@
+# deps
+node_modules/
+
+# misc
+.DS_Store
+
+*.db
+.vercel
+dist
