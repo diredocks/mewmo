@@ -6,6 +6,8 @@ import * as handlers from "./handlers.ts";
 const memos = createRouter()
   .openapi(routes.list, handlers.list)
   .openapi(routes.create, handlers.create)
-  .openapi(routes.get, handlers.get);
+  .openapi(routes.get, handlers.get)
+  .openapi(routes.edit, handlers.edit)
+  .openapi(routes.remove, handlers.remove);
 
 export default memos;

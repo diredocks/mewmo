@@ -1,4 +1,4 @@
-import { insertMemosSchema, selectMemosSchema } from "@/db/memos/schema";
+import { editMemoSchema, insertMemosSchema, selectMemosSchema, tagsSchema } from "@/db/memos/schema";
 import { jsonContent } from "@/utils";
 import { HttpStatusCodes } from "@/utils/http-status";
 import { createErrorSchema, IdParamsSchema, notFoundSchema } from "@/utils/openapi/schemas";
@@ -11,6 +11,11 @@ export const list = createRoute({
   method: "get",
   path,
   tags,
+  request: {
+    query: z.object({
+      tags: tagsSchema.optional(),
+    }),
+  },
   responses: {
     [HttpStatusCodes.OK]: jsonContent(
       z.array(selectMemosSchema),
@@ -65,6 +70,59 @@ export const get = createRoute({
   }
 });
 
+export const edit = createRoute({
+  path: `${path}/{id}`,
+  method: "patch",
+  request: {
+    params: IdParamsSchema,
+    body: jsonContent(
+      editMemoSchema,
+      "The task updates",
+      true
+    ),
+  },
+  tags,
+  responses: {
+    [HttpStatusCodes.OK]: jsonContent(
+      selectMemosSchema,
+      "The updated memo",
+    ),
+    [HttpStatusCodes.NOT_FOUND]: jsonContent(
+      notFoundSchema,
+      "Memo not found",
+    ),
+    [HttpStatusCodes.UNPROCESSABLE_ENTITY]: jsonContent(
+      createErrorSchema(editMemoSchema)
+        .or(createErrorSchema(IdParamsSchema)),
+      "The validation error(s)",
+    ),
+  }
+});
+
+export const remove = createRoute({
+  path: `${path}/{id}`,
+  method: "delete",
+  request: {
+    params: IdParamsSchema,
+  },
+  tags,
+  responses: {
+    [HttpStatusCodes.NO_CONTENT]: {
+      description: "Memo deleted",
+    },
+    [HttpStatusCodes.NOT_FOUND]: jsonContent(
+      notFoundSchema,
+      "Memo not found",
+    ),
+    [HttpStatusCodes.UNPROCESSABLE_ENTITY]: jsonContent(
+      createErrorSchema(IdParamsSchema),
+      "Invalid id error",
+    ),
+  }
+});
+
 export type ListRoute = typeof list;
 export type CreateRoute = typeof create;
 export type GetRoute = typeof get;
+export type EditRoute = typeof edit;
+export type RemoveRoute = typeof remove;
