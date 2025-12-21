@@ -1,78 +1,106 @@
+// TODO: Transactions (in function)
+
 import type { RouteHandler } from "@hono/zod-openapi";
 import type { ListRoute, CreateRoute, GetRoute, EditRoute, RemoveRoute } from "./routes";
-import { memos } from "@/db/models";
+import { memos, tags, memosToTags } from "@/db/models";
 import db from "@/db";
 import { HttpStatusCodes, HttpStatusPhrases } from "@/utils/http-status";
 import { eq } from "drizzle-orm";
 
-export const list: RouteHandler<ListRoute> = async (c) => {
-  // const { tags } = c.req.valid("query");
-  const memos = await db.query.memos.findMany();
-  return c.json(memos);
-}
+async function syncTags(memoId: number, tagNames: string[]) {
+  await db.delete(memosToTags).where(eq(memosToTags.memoId, memoId));
 
-export const create: RouteHandler<CreateRoute> = async (c) => {
-  const memo = c.req.valid("json");
-  const [inserted] = await db.insert(memos).values(memo).returning();
-  return c.json(inserted, HttpStatusCodes.OK);
-}
+  if (!tagNames.length) return;
 
-export const get: RouteHandler<GetRoute> = async (c) => {
-  const { id } = c.req.valid("param");
-  const memo = await db.query.memos.findFirst({
+  const existingTags = await db.query.tags.findMany({
     where(fields, operators) {
-      return operators.eq(fields.id, id);
+      return operators.inArray(fields.name, tagNames);
     },
   });
 
-  if (!memo) {
-    return c.json(
-      {
-        message: HttpStatusPhrases.NOT_FOUND,
-      },
-      HttpStatusCodes.NOT_FOUND,
-    );
+  const tagMap = new Map(existingTags.map(t => [t.name, t.id]));
+  const missing = tagNames.filter(t => !tagMap.has(t));
+
+  if (missing.length) {
+    const inserted = await db.insert(tags).values(missing.map(name => ({ name }))).returning();
+    inserted.forEach(t => tagMap.set(t.name!, t.id));
   }
 
-  return c.json(memo, HttpStatusCodes.OK);
+  await db.insert(memosToTags).values([...tagMap.values()].map(tagId => ({ memoId, tagId })));
 }
+
+async function loadMemoById(id: number) {
+  const row = await db.query.memos.findFirst({
+    where: eq(memos.id, id),
+    with: { memosToTags: { with: { tag: true } } },
+  });
+  if (!row) return null;
+  const { memosToTags, ...memo } = row;
+  return { ...memo, tags: memosToTags.map(mt => mt.tag.name) };
+}
+
+async function handleNotFound(c: any) {
+  return c.json({ message: HttpStatusPhrases.NOT_FOUND }, HttpStatusCodes.NOT_FOUND);
+}
+
+export const list: RouteHandler<ListRoute> = async (c) => {
+  const { tags } = c.req.valid("query");
+  const rows = (await db.query.memos.findMany({ with: { memosToTags: { with: { tag: true } } } }));
+  let result = rows.map(({ memosToTags, ...memo }) => ({ ...memo, tags: memosToTags.map(mt => mt.tag.name) }));
+  if (tags?.length) {
+    result = result.filter(memo =>
+      tags.every(tag => memo.tags.includes(tag))
+    );
+  }
+  return c.json(result, HttpStatusCodes.OK);
+};
+
+export const get: RouteHandler<GetRoute> = async (c) => {
+  const memo = await loadMemoById(c.req.valid("param").id);
+  return memo ? c.json(memo, HttpStatusCodes.OK) : handleNotFound(c);
+};
 
 export const edit: RouteHandler<EditRoute> = async (c) => {
   const { id } = c.req.valid("param");
   const updates = c.req.valid("json");
 
-  /* This is throw an UNPROCESSABLE_ENTITY error
-   * when nothing is given in updates, but whatever */
-
-  const [memo] = await db.update(memos)
+  const updated = await db.update(memos)
     .set(updates)
     .where(eq(memos.id, id))
-    .returning();
+    .returning({ id: memos.id });
 
-  if (!memo) {
-    return c.json(
-      {
-        message: HttpStatusPhrases.NOT_FOUND,
-      },
-      HttpStatusCodes.NOT_FOUND,
-    );
+  if (!updated.length) return handleNotFound(c);
+
+  if (updates.tags) {
+    await syncTags(id, updates.tags);
   }
 
+  const memo = await loadMemoById(id);
+  return memo ? c.json(memo, HttpStatusCodes.OK) : handleNotFound(c);
+};
+
+export const create: RouteHandler<CreateRoute> = async (c) => {
+  const { tags = [], ...memoData } = c.req.valid("json");
+  const [row] = await db.insert(memos).values(memoData).returning({ id: memos.id });
+  if (!row) throw new Error("Insert memo failed");
+
+  await syncTags(row.id, tags);
+  const memo = await loadMemoById(row.id);
+  if (!memo) throw new Error("Inserted memo not found");
+
   return c.json(memo, HttpStatusCodes.OK);
-}
+};
 
 export const remove: RouteHandler<RemoveRoute> = async (c) => {
   const { id } = c.req.valid("param");
-  const result = await db.delete(memos).where(eq(memos.id, id));
 
-  if (result.rowsAffected === 0) {
-    return c.json(
-      {
-        message: HttpStatusPhrases.NOT_FOUND,
-      },
-      HttpStatusCodes.NOT_FOUND,
-    );
-  }
+  const result = await db.transaction(async (tx) => {
+    await tx.delete(memosToTags).where(eq(memosToTags.memoId, id));
+    const res = await tx.delete(memos).where(eq(memos.id, id));
+    return res.rowsAffected;
+  });
 
-  return c.body(null, HttpStatusCodes.NO_CONTENT);
+  return result
+    ? c.body(null, HttpStatusCodes.NO_CONTENT)
+    : handleNotFound(c);
 };

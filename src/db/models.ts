@@ -1,1 +1,1 @@
-export { default as memos } from "./memos/model.ts";
+export * from "./memos/model.ts";
