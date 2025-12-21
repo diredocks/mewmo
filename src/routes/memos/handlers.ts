@@ -5,7 +5,7 @@ import type { ListRoute, CreateRoute, GetRoute, EditRoute, RemoveRoute } from ".
 import { memos, tags, memosToTags } from "@/db/models";
 import db from "@/db";
 import { HttpStatusCodes, HttpStatusPhrases } from "@/utils/http-status";
-import { eq } from "drizzle-orm";
+import { sql, eq, inArray, desc } from "drizzle-orm";
 
 async function syncTags(memoId: number, tagNames: string[]) {
   await db.delete(memosToTags).where(eq(memosToTags.memoId, memoId));
@@ -44,15 +44,52 @@ async function handleNotFound(c: any) {
 }
 
 export const list: RouteHandler<ListRoute> = async (c) => {
-  const { tags } = c.req.valid("query");
-  const rows = (await db.query.memos.findMany({ with: { memosToTags: { with: { tag: true } } } }));
-  let result = rows.map(({ memosToTags, ...memo }) => ({ ...memo, tags: memosToTags.map(mt => mt.tag.name) }));
-  if (tags?.length) {
-    result = result.filter(memo =>
-      tags.every(tag => memo.tags.includes(tag))
-    );
-  }
-  return c.json(result, HttpStatusCodes.OK);
+  const { tags: filterTags, page, limit } = c.req.valid("query");
+  const offset = (page - 1) * limit;
+
+  const memoFilter = filterTags?.length
+    ? inArray(
+      memos.id,
+      db.select({ id: memosToTags.memoId })
+        .from(memosToTags)
+        .innerJoin(tags, eq(tags.id, memosToTags.tagId))
+        .where(inArray(tags.name, filterTags))
+        .groupBy(memosToTags.memoId)
+        .having(sql`count(distinct ${tags.name}) = ${filterTags.length}`)
+    )
+    : undefined;
+
+  const [totalResult, data] = await Promise.all([
+    db.select({ count: sql<number>`count(*)` })
+      .from(memos)
+      .where(memoFilter),
+
+    db.query.memos.findMany({
+      where: memoFilter,
+      limit,
+      offset,
+      with: {
+        memosToTags: {
+          with: {
+            tag: true
+          }
+        }
+      },
+      orderBy: [desc(memos.createdAt)]
+    })
+  ]);
+
+  const formattedData = data.map(row => {
+    const { memosToTags, ...memo } = row;
+    return { ...memo, tags: memosToTags.map(mt => mt.tag.name) };
+  });
+
+  return c.json({
+    data: formattedData,
+    page,
+    limit,
+    total: totalResult[0]?.count ?? 0,
+  }, HttpStatusCodes.OK);
 };
 
 export const get: RouteHandler<GetRoute> = async (c) => {

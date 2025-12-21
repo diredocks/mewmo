@@ -14,12 +14,30 @@ export const list = createRoute({
   request: {
     query: z.object({
       tags: tagsSchema.optional(),
+      page: z.coerce.number().int().min(1).default(1),
+      limit: z.coerce.number().int().min(1).max(100).default(10),
     }),
   },
   responses: {
     [HttpStatusCodes.OK]: jsonContent(
-      z.array(selectMemosSchema),
-      "The list of memos"
+      z.object({
+        data: z.array(selectMemosSchema).openapi({
+          description: "The list of memos for the current page",
+        }),
+        page: z.number().int().min(1).openapi({
+          description: "Current page number",
+          example: 1,
+        }),
+        limit: z.number().int().min(1).openapi({
+          description: "Number of memos per page",
+          example: 10,
+        }),
+        total: z.number().int().min(0).openapi({
+          description: "Total number of memos matching the query",
+          example: 42,
+        }),
+      }),
+      "Paginated list of memos with metadata"
     ),
   },
   security: [{ Bearer: [] }],
