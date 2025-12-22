@@ -131,13 +131,39 @@ export const create: RouteHandler<CreateRoute> = async (c) => {
 export const remove: RouteHandler<RemoveRoute> = async (c) => {
   const { id } = c.req.valid("param");
 
-  const result = await db.transaction(async (tx) => {
+  const affected = await db.transaction(async (tx) => {
+    const usedTags = await tx
+      .select({ tagId: memosToTags.tagId })
+      .from(memosToTags)
+      .where(eq(memosToTags.memoId, id));
+
     await tx.delete(memosToTags).where(eq(memosToTags.memoId, id));
+
     const res = await tx.delete(memos).where(eq(memos.id, id));
+    if (!res.rowsAffected) return 0;
+
+    if (!usedTags.length) return res.rowsAffected;
+
+    const tagIds = usedTags.map(t => t.tagId);
+
+    const stillUsed = await tx
+      .select({ tagId: memosToTags.tagId })
+      .from(memosToTags)
+      .where(inArray(memosToTags.tagId, tagIds))
+      .groupBy(memosToTags.tagId);
+
+    const stillUsedIds = new Set(stillUsed.map(t => t.tagId));
+
+    const orphanIds = tagIds.filter(id => !stillUsedIds.has(id));
+
+    if (orphanIds.length) {
+      await tx.delete(tags).where(inArray(tags.id, orphanIds));
+    }
+
     return res.rowsAffected;
   });
 
-  return result
+  return affected
     ? c.body(null, HttpStatusCodes.NO_CONTENT)
     : handleNotFound(c);
 };
