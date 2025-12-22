@@ -36,7 +36,7 @@ export const memosToTags = sqliteTable('memosToTags',
   ]
 )
 
-export const usersToGroupsRelations = relations(memosToTags, ({ one }) => ({
+export const memosToTagsRelations = relations(memosToTags, ({ one }) => ({
   tag: one(tags, {
     fields: [memosToTags.tagId],
     references: [tags.id],

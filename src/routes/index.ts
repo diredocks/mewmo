@@ -23,4 +23,5 @@ const handler: RouteHandler<typeof route> = (c) => {
 };
 
 export const index = createRouter().openapi(route, handler);
-export { default as memos } from "./memos";
+export { memos } from "./memos";
+export { tags } from "./tags";

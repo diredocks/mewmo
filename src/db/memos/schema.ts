@@ -1,6 +1,6 @@
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "@hono/zod-openapi";
-import { memos } from "./model";
+import { memos, tags } from "./model";
 
 export const tagsSchema = z.preprocess(
   (val) => {
@@ -57,5 +57,18 @@ export const insertMemosSchema = createInsertSchema(memos, {
     createdAt: true,
     updatedAt: true,
   });
+
+export const selectTagsSchema = createSelectSchema(tags, {
+  id: f => f.min(1).openapi({
+    description: "Unique identifier for the tag",
+    example: 1,
+  }),
+  name: f => f.openapi({
+    description: "Name of the tag",
+    example: "work",
+  }),
+}).extend({
+  memos: z.array(selectMemosSchema),
+});
 
 export const editMemoSchema = insertMemosSchema.partial();
