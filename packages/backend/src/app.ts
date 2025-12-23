@@ -5,7 +5,7 @@ import { createRouter } from "@/utils";
 import { onError, notFound, serveEmojiFavicon } from "@/middlewares";
 
 import env from "@/env";
-import { index, memos, tags } from "@/routes";
+import * as routes from "@/routes";
 
 const app = createRouter();
 
@@ -42,7 +42,7 @@ if (env.NODE_ENV === "dev") {
 }
 
 // register routes
-[index, memos, tags].forEach((r) => {
+Object.values(routes).forEach((r) => {
   app.route("/", r);
 });
 

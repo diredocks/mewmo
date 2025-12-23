@@ -1,6 +1,6 @@
 import type { RouteHandler } from "@hono/zod-openapi";
 import type { ListRoute, GetRoute, RemoveRoute } from "./routes";
-import db from "@/db";
+import { db } from "@/db";
 import { tags, memosToTags } from "@/db/models";
 import { eq } from "drizzle-orm";
 import { handleNotFound } from "@/utils/openapi/handlers";

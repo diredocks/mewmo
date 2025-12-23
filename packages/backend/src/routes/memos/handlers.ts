@@ -3,7 +3,7 @@
 import type { RouteHandler } from "@hono/zod-openapi";
 import type { ListRoute, CreateRoute, GetRoute, EditRoute, RemoveRoute } from "./routes";
 import { memos, tags, memosToTags } from "@/db/models";
-import db from "@/db";
+import { db } from "@/db";
 import { HttpStatusCodes, HttpStatusPhrases } from "@/utils/http-status";
 import { sql, eq, inArray, desc } from "drizzle-orm";
 

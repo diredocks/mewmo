@@ -4,7 +4,7 @@ import type { ContentfulStatusCode } from "hono/utils/http-status";
 import { INTERNAL_SERVER_ERROR, OK } from "@/utils/http-status/http-status-codes";
 import env from "@/env";
 
-const onError: ErrorHandler = (err, c) => {
+export const onError: ErrorHandler = (err, c) => {
   const currentStatus = "status" in err
     ? err.status
     : c.newResponse(null).status;
@@ -19,5 +19,3 @@ const onError: ErrorHandler = (err, c) => {
     statusCode,
   );
 };
-
-export default onError;

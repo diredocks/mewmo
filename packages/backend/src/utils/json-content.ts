@@ -1,6 +1,6 @@
 import type { ZodSchema } from "./types";
 
-const jsonContent = <
+export const jsonContent = <
   T extends ZodSchema,
 >(schema: T,
   description: string,
@@ -16,5 +16,3 @@ const jsonContent = <
     required,
   };
 };
-
-export default jsonContent;

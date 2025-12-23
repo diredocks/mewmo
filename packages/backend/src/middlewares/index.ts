@@ -1,3 +1,3 @@
-export { default as serveEmojiFavicon } from "./serve-emoji-favicon.ts";
-export { default as onError } from "./on-error.ts";
-export { default as notFound } from "./not-found.ts";
+export { serveEmojiFavicon } from "./serve-emoji-favicon.ts";
+export { onError } from "./on-error.ts";
+export { notFound } from "./not-found.ts";

@@ -1,7 +1,7 @@
 import { z } from "@hono/zod-openapi";
 import type { ZodSchema } from "@/utils/types";
 
-const createErrorSchema = <T extends ZodSchema>(schema: T) => {
+export const createErrorSchema = <T extends ZodSchema>(schema: T) => {
   const { error } = schema.safeParse(
     schema._def.type === "array" ? [schema.element._def.type === "string" ? 123 : "invalid"] : {},
   );
@@ -49,5 +49,3 @@ const createErrorSchema = <T extends ZodSchema>(schema: T) => {
       }),
   });
 };
-
-export default createErrorSchema;
