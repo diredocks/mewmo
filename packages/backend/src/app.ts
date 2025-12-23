@@ -5,7 +5,7 @@ import { createRouter } from "@/utils";
 import { onError, notFound, serveEmojiFavicon } from "@/middlewares";
 
 import env from "@/env";
-import * as routes from "@/routes";
+import { index, memos, tags } from "@/routes";
 
 const app = createRouter();
 
@@ -42,8 +42,10 @@ if (env.NODE_ENV === "dev") {
 }
 
 // register routes
-Object.values(routes).forEach((r) => {
-  app.route("/", r);
-});
+const route = app
+  .route("/", index)
+  .route("/", memos)
+  .route("/", tags);
 
 export default app;
+export type RouteSchema = typeof route;
