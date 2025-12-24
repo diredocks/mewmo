@@ -1,5 +1,7 @@
 import { Component, createSignal } from "solid-js";
-import { At, HashTag, Send } from "./Icons";
+import AtSign from 'lucide-solid/icons/at-sign';
+import HashIcon from 'lucide-solid/icons/hash';
+import Send from 'lucide-solid/icons/send-horizontal';
 
 interface MemoInputProps {
   placeholder?: string;
@@ -8,7 +10,6 @@ interface MemoInputProps {
 
 export const MemoInput: Component<MemoInputProps> = (props) => {
   const [value, setValue] = createSignal("");
-  const [focused, setFocused] = createSignal(false);
 
   const send = () => {
     const text = value().trim();
@@ -19,53 +20,82 @@ export const MemoInput: Component<MemoInputProps> = (props) => {
   };
 
   return (
-    <div class="card bg-base-100 ring-1 ring-base-300 transition-all"
-      classList={{
-        "shadow-md": focused(),
-        "shadow-sm": !focused(),
-      }}>
-      <div class="card-body gap-2 p-2"
-        classList={{
-          "ring-accent ring-2 rounded-sm": focused(),
-          "ring-0": !focused(),
-        }}>
+    <div
+      class="
+    card bg-base-100
+    ring-1 ring-base-300
+    shadow-sm
+    transition-all
+    group
+    focus-within:shadow-md
+  "
+    >
+      <div
+        class="
+      card-body gap-2 p-2
+      ring-0 rounded-sm
+      transition-all
+      group-focus-within:ring-2
+      group-focus-within:ring-accent
+    "
+      >
+        {/* textarea */}
         <textarea
-          class="textarea textarea-ghost w-full py-1 px-1.5 outline-0 resize-none"
+          class="
+        textarea textarea-ghost
+        w-full py-1 px-1.5
+        outline-none resize-none
+      "
           placeholder={props.placeholder ?? "I've been thinking of..."}
           value={value()}
           onInput={(e) => setValue(e.currentTarget.value)}
-          onFocus={() => setFocused(true)}
-          onBlur={() => setFocused(false)}
         />
+
+        {/* footer */}
         <div class="flex items-center justify-between p-1">
+          {/* left buttons */}
           <div class="join">
-            <button class="btn btn-xs join-item px-1"
-              classList={{
-                "text-gray-500": focused(),
-                "btn-ghost text-gray-300": !focused()
-              }}>
-              <HashTag />
+            <button
+              class="
+            btn btn-xs join-item px-1
+            btn-ghost text-gray-300
+            transition-colors
+            group-focus-within:text-gray-500
+          "
+            >
+              <HashIcon size={16} />
             </button>
-            <button class="btn btn-xs join-item px-1"
-              classList={{
-                "text-gray-500": focused(),
-                "btn-ghost text-gray-300": !focused()
-              }}>
-              <At />
+
+            <button
+              class="
+            btn btn-xs join-item px-1
+            btn-ghost text-gray-300
+            transition-colors
+            group-focus-within:text-gray-500
+          "
+            >
+              <AtSign size={16} />
             </button>
           </div>
+
+          {/* send button（仍然是业务状态） */}
           <button
-            class="btn btn-xs"
+            class="
+          btn btn-xs
+          transition-colors
+          disabled:opacity-100
+        "
             classList={{
-              "btn-accent": !!value().length,
-              "text-gray-300": !!!value().length
+              "btn-accent": value().length > 0,
             }}
+            disabled={!value().length}
             onClick={send}
           >
-            <Send />
+            <Send size={16} />
           </button>
         </div>
       </div>
-    </div >
+    </div>
+
   );
 };
