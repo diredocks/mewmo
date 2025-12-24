@@ -17,6 +17,7 @@ app.config.timestamp_*.js
 /.idea
 .project
 .classpath
+/.vscode
 *.launch
 .settings/
 

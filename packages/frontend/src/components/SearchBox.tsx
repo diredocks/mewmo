@@ -1,6 +1,6 @@
+import ListFilter from "lucide-solid/icons/list-filter";
+import Search from "lucide-solid/icons/search";
 import { Component, JSX } from "solid-js";
-import ListFilter from 'lucide-solid/icons/list-filter';
-import Search from 'lucide-solid/icons/search';
 
 type SearchBoxProps = {
   value?: string;
@@ -10,16 +10,9 @@ type SearchBoxProps = {
 
 export const SearchBox: Component<SearchBoxProps> = (props) => {
   return (
-    <div class="flex justify-end w-2/5 transition-all">
-      <label class="input rounded-full w-full bg-neutral-200 group 
-        border-0 shadow-none outline-none ">
-        <span
-          class="
-        opacity-50
-        transition-opacity
-        group-focus-within:opacity-80
-        hover:opacity-80
-        hover:cursor-pointer">
+    <div class="flex w-2/5 justify-end transition-all">
+      <label class="input group w-full rounded-full border-0 bg-neutral-200 shadow-none outline-none">
+        <span class="opacity-50 transition-opacity hover:cursor-pointer hover:opacity-80 group-focus-within:opacity-80">
           <Search size={16} />
         </span>
 
@@ -28,16 +21,13 @@ export const SearchBox: Component<SearchBoxProps> = (props) => {
           value={props.value ?? ""}
           placeholder={props.placeholder ?? "Ctrl+K"}
           onInput={props.onInput}
-          class="opacity-60 focus-within:opacity-100" />
+          class="opacity-60 focus-within:opacity-100"
+        />
 
-        <span class="opacity-50 transition-opacity
-        group-focus-within:opacity-80
-        hover:opacity-80
-        hover:cursor-pointer">
+        <span class="opacity-50 transition-opacity hover:cursor-pointer hover:opacity-80 group-focus-within:opacity-80">
           <ListFilter size={16} />
         </span>
       </label>
     </div>
-
   );
 };

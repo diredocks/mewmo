@@ -1,7 +1,7 @@
+import ChevronDown from "lucide-solid/icons/chevron-down";
 import { Component } from "solid-js";
 import { MemoInput } from "./components/MemoInput";
 import { SearchBox } from "./components/SearchBox";
-import ChevronDown from 'lucide-solid/icons/chevron-down';
 
 const App: Component = () => {
   const handleSend = (text: string) => {
@@ -10,13 +10,11 @@ const App: Component = () => {
 
   return (
     <div class="bg-base-200">
-      <div class="flex w-full max-w-240 mx-auto min-h-screen">
-        <div class="flex-1 min-w-0 p-4 hidden lg:flex">
-          To be filled...
-        </div>
+      <div class="mx-auto flex min-h-screen w-full max-w-240">
+        <div class="hidden min-w-0 flex-1 p-4 lg:flex">To be filled...</div>
 
-        <div class="flex-2 min-w-0 p-4 flex flex-col gap-3">
-          <div class="flex justify-between items-center">
+        <div class="flex min-w-0 flex-2 flex-col gap-3 p-4">
+          <div class="flex items-center justify-between">
             <button class="btn btn-ghost -translate-x-3 text-lg">
               🐱
               <ChevronDown size={16} />
